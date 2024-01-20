@@ -121,11 +121,13 @@ class Monkey(object):
         
         # differential dataframe for uploading into postgresql
         df = self.masterDF.loc[self.startIndex:]
+
+        # rename the column temperature since the name from flex has syntax issues on other pc
         new_df = df.rename(columns={ df.columns[20]: 'temperature' })
         print(new_df.columns)
         if len(new_df) > 0:
             print('insert to postgres')
-            #auto_insert_flex_csv_to_pg(new_df, 'flex2')
+            auto_insert_flex_csv_to_pg(new_df, 'flex2')
             
         else:
             print('no need to upload to postgres')

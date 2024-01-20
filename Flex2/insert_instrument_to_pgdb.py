@@ -2,10 +2,7 @@ import psycopg2
 from psycopg2 import Error
 import json
 import os
-
-# table_name = 'cell_count' 
-# column_map = os.path.join(os.path.dirname(os.getcwd()),f'column_map/{table_name}.json')
-# print(column_map)
+import traceback
 
 def insert_cellcount_csv_to_pg(combined_df, table_name):
     df = combined_df
@@ -204,7 +201,7 @@ def auto_insert_flex_csv_to_pg(combined_df, table_name):
         print('data from {} upload success'.format(table_name))            
 
     except (Exception, Error) as error:
-        print("Error while connecting to PostgreSQL", error)
+        print(traceback.format_exc())
     finally:
         if (connection):
             cur.close()
