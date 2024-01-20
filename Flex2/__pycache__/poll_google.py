@@ -18,25 +18,15 @@ class Monkey(object):
     masterDF = None
     dbKey = 0
     pathString = None
-    # pathStringStarter = None
     startIndex = 0
     database = None
     cached_stamp = 0
 
     def __init__(self):
-        dir_path = '/Users/wayne/Desktop'
-        back_up = os.path.join(dir_path, 'backup.txt')
-
-        if os.path.isfile(back_up):
-            with open(back_up, 'r') as r:
-                self.pathString = r.read()
-        else:
-            self.pathString = open(back_up, 'w+')
      
         # pathString: The file that the script will read to get pandas dataframe (the data file)
-        # self.pathString = '/Users/wayne/Documents/Programming/vscode/API/watchdog/Flex2/flex2/' + self.pathStringStarter # '/Users/sarmad/Documents/VSCode/Flex 2 Script/CDrive/SampleResults2023-November.csv'
-        # self.pathString = startingPath
-            
+        self.pathString = '/Users/wayne/Documents/Programming/vscode/API/watchdog/Flex2/flex2/SampleResults2023-November.csv' # '/Users/sarmad/Documents/VSCode/Flex 2 Script/CDrive/SampleResults2023-November.csv'
+
         # destinationPath: Location of flex2 database (google drive for desktop path)
         self.destinationPath = '/Users/wayne/Library/CloudStorage/GoogleDrive-wayne@vitrolabsinc.com/Shared drives/R&PD Team/Vitrolab Experimental Data (Trained User Only)/Instrument/Flex2 Exports/Flex2 Database.gsheet' # '/Users/sarmad/Library/CloudStorage/GoogleDrive-sarmad@vitrolabsinc.com/Shared drives/R&PD Team/Vitrolab Experimental Data (Trained User Only)/Instrument/Flex2 Exports/Flex2 Database.gsheet'
         
@@ -74,13 +64,6 @@ class Monkey(object):
         # Get the path of the new file
         self.pathString = event.src_path
         print(f"the path is now {self.pathString}")
-
-
-        dir_path = '/Users/wayne/Desktop'
-        back_up = os.path.join(dir_path, 'backup.txt')
-
-        with open(back_up, 'w') as w:
-            w.write(self.pathString)
 
     # push_to_DF: Push data from csv path to pandas dataframe, and then upload all new data from dataframe to database
     # Check for which data is old data by looking for the index that matches dbKey.
@@ -121,11 +104,10 @@ class Monkey(object):
         
         # differential dataframe for uploading into postgresql
         df = self.masterDF.loc[self.startIndex:]
-        new_df = df.rename(columns={ df.columns[20]: 'temperature' })
-        print(new_df.columns)
-        if len(new_df) > 0:
+        print('dataframe is', df)
+        if len(df) > 0:
             print('insert to postgres')
-            #auto_insert_flex_csv_to_pg(new_df, 'flex2')
+            auto_insert_flex_csv_to_pg(df, 'flex2')
             
         else:
             print('no need to upload to postgres')
@@ -165,6 +147,7 @@ class Monkey(object):
                 exit()
         
 if __name__ == "__main__":
-
     pub = Monkey()
     pub.watch()
+
+    
