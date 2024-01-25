@@ -15,8 +15,8 @@ def retry(times, exceptions,delay):
             attempt = 0
             while attempt < times:
                 try:
-                    return func(*args, **kwargs)
-                except exceptions:
+                    return func(*args, **kwargs) # calls the functions thats being decorated
+                except exceptions: # tries again when exception is thrown
                     print(
                         'Exception thrown when attempting to run %s, attempt '
                         '%d of %d' % (func, attempt, times)
