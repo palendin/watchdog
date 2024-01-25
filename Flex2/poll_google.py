@@ -6,6 +6,8 @@ import pandas as pd
 import gspread as gs
 import numpy as np
 from insert_instrument_to_pgdb import auto_insert_flex_csv_to_pg
+import traceback
+from retry import retry
 
 #from API.SQL_query.tools_and_functions.insert_instrument_to_pgdb import insert_flex_csv_to_pg
 
@@ -84,6 +86,7 @@ class Monkey(object):
 
     # push_to_DF: Push data from csv path to pandas dataframe, and then upload all new data from dataframe to database
     # Check for which data is old data by looking for the index that matches dbKey.
+    @retry(times=10, exceptions=Exception,delay=5)
     def push_to_DF(self):
         #global worksheet, masterDF
         self.updatedbKey()
@@ -116,7 +119,7 @@ class Monkey(object):
         self.worksheet.append_rows(self.masterDF[self.startIndex:].values.tolist())
         print('Values Uploaded to google spreadsheet!')
      
-
+    @retry(times=10, exceptions=Exception,delay=5)
     def push_to_postgres(self):
         
         # differential dataframe for uploading into postgresql
@@ -132,7 +135,7 @@ class Monkey(object):
         else:
             print('no need to upload to postgres')
             pass
-
+    
     def watch(self):
         
         my_event_handler = PatternMatchingEventHandler(['*'], None, False, True)
@@ -141,30 +144,34 @@ class Monkey(object):
         
         self.myObserver.start()
 
-        while True:
-            try:
-                time.sleep(1)
-                # Get the time stamp when the csv file linked by self.filepath was last saved
-                stamp = os.stat(self.pathString).st_mtime
-                # print(self.pathString)
+        try:
+            while True:
+                try:
+                    # Infinite loop. Every 1 second, pub (class monkey) will check if there is either a new file or new save on existing file linked by
+                    # pathString. If a new file has been created, set the path to that new file such that this new file gets monitored for new saves
 
-                # Check if the current time stamp matches the last known save. If not, assume the file has been saved again and there is new
-                # data that needs to be uploaded. Push new data to database and update cached time stamp with new stamp
-                if stamp != self.cached_stamp:
-                    
-                    self.cached_stamp = stamp
-                    print(f"MONKEY: {self.pathString} has been changed")
-                    # masterDF = pd.read_csv(pathString)
-                    self.push_to_DF()
-                    self.push_to_postgres()
+                    time.sleep(1)
+                    # Get the time stamp when the csv file linked by self.filepath was last saved
+                    stamp = os.stat(self.pathString).st_mtime
+                    # print(self.pathString)
+
+                    # Check if the current time stamp matches the last known save. If not, assume the file has been saved again and there is new
+                    # data that needs to be uploaded. Push new data to database and update cached time stamp with new stamp
+                    if stamp != self.cached_stamp:
+                        
+                        self.cached_stamp = stamp
+                        print(f"MONKEY: {self.pathString} has been changed")
+                        # masterDF = pd.read_csv(pathString)
+                        self.push_to_DF()
+                        self.push_to_postgres()
+                except (Exception):
+                    print(traceback.format_exc())
                 
-                # Infinite loop. Every 1 second, pub (class monkey) will check if there is either a new file or new save on existing file linked by
-                # pathString. If a new file has been created, set the path to that new file such that this new file gets monitored for new saves
-            except KeyboardInterrupt:
-                print('\nDone')
-                self.myObserver.stop()
-                self.myObserver.join()
-                exit()
+        except KeyboardInterrupt:
+            print('\nDone')
+            self.myObserver.stop()
+            self.myObserver.join()
+            exit()
         
 if __name__ == "__main__":
 
