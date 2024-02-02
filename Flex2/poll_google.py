@@ -15,6 +15,7 @@ class Monkey(object):
 
     destinationPath = None
     obsvPath = None
+    service_account_path = None
     #event = None 
     worksheet = None
     masterDF = None
@@ -24,6 +25,7 @@ class Monkey(object):
     startIndex = 0
     database = None
     cached_stamp = 0
+    tab_name = None
 
     def __init__(self):
         dir_path = '/Users/wayne/Desktop'
@@ -45,6 +47,9 @@ class Monkey(object):
         # folder to observe for changes
         self.obsvPath = '/Users/wayne/Documents/Programming/vscode/API/watchdog/Flex2/flex2' #'/Users/sarmad/Documents/VSCode/Flex 2 Script/CDrive'
 
+        # initialize variables
+        self.service_account_path = '/Users/wayne/Documents/Programming/vscode/API/Google_API/service_account.json'
+        self.tab_name = 'test'
         # start the observer
         self.myObserver = Observer()
 
@@ -52,9 +57,11 @@ class Monkey(object):
     # This will be used to find what data from pandas dataframe has already been uploaded to database
     def updatedbKey(self):
 
-        gc = gs.service_account(filename='/Users/wayne/Documents/Programming/vscode/API/Google_API/service_account.json')
+        gc = gs.service_account(filename=self.service_account_path)
         sh = gc.open_by_key('1CFYh78GX4T_xjn-nOZT0ysmWQdJCYz7yh3cy97OOe1g')
-        self.worksheet = sh.worksheet('test')
+
+        # get the sheet from sheet name
+        self.worksheet = sh.worksheet(self.tab_name)
 
         # databaseDF = pd.read_csv('https://docs.google.com/spreadsheets/d/1B5GIgo5jAgC163Cw9nt9fQj8fvh43KkgqirVemjOCiY/export?format=csv')
 
@@ -86,7 +93,7 @@ class Monkey(object):
 
     # push_to_DF: Push data from csv path to pandas dataframe, and then upload all new data from dataframe to database
     # Check for which data is old data by looking for the index that matches dbKey.
-    @retry(times=10, exceptions=Exception,delay=5)
+    @retry(times=20, exceptions=Exception,delay=5)
     def push_to_DF(self):
         #global worksheet, masterDF
         self.updatedbKey()
@@ -119,7 +126,7 @@ class Monkey(object):
         self.worksheet.append_rows(self.masterDF[self.startIndex:].values.tolist())
         print('Values Uploaded to google spreadsheet!')
      
-    @retry(times=10, exceptions=Exception,delay=5)
+    @retry(times=20, exceptions=Exception,delay=5)
     def push_to_postgres(self):
         
         # differential dataframe for uploading into postgresql
@@ -150,7 +157,7 @@ class Monkey(object):
                     # Infinite loop. Every 1 second, pub (class monkey) will check if there is either a new file or new save on existing file linked by
                     # pathString. If a new file has been created, set the path to that new file such that this new file gets monitored for new saves
 
-                    time.sleep(1)
+                    time.sleep(10)
                     # Get the time stamp when the csv file linked by self.filepath was last saved
                     stamp = os.stat(self.pathString).st_mtime
                     # print(self.pathString)
@@ -164,6 +171,7 @@ class Monkey(object):
                         # masterDF = pd.read_csv(pathString)
                         self.push_to_DF()
                         self.push_to_postgres()
+
                 except (Exception):
                     print(traceback.format_exc())
                 
