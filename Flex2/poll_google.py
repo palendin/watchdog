@@ -50,6 +50,7 @@ class Monkey(object):
         # initialize variables
         self.service_account_path = '/Users/wayne/Documents/Programming/vscode/API/Google_API/service_account.json'
         self.tab_name = 'test'
+        
         # start the observer
         self.myObserver = Observer()
 
