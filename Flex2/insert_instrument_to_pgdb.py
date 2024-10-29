@@ -8,10 +8,10 @@ def insert_cellcount_csv_to_pg(combined_df, table_name):
     df = combined_df
     try:
         connection = psycopg2.connect(
-        host="34.134.210.165",
-        database="vitrolabs",
-        user="postgres",
-        password="Vitrolabs2023!",
+        host="xx",
+        database="xx",
+        user="xx",
+        password="xx",
         port=5432)
         
         cur = connection.cursor()
